@@ -1,0 +1,180 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8"/>
+    <title>Boat Test</title>
+    <script src="landEngine.js"></script>
+    <script src="landBoat.js"></script>
+</head>
+<body>
+<h1>Управление судном</h1>
+<table style="border:none">
+<tr>
+    <td>
+        <canvas id="viewport" width="800" height="500"></canvas>
+        <table style="border: none">
+        <tr>
+            <td colspan="2">Управление судном</td>
+        </tr>
+        <tr>
+            <td rowspan="2"><input type="button" value="&lt;" onclick="boat.turnLeft();" title="Поворот влево"/></td>
+            <td><input type="button" value="/\" onclick="boat.changeRPM(100);"  title="Ускорение"/></td>
+            <td rowspan="2"><input type="button" value="&gt;" onclick="boat.turnRight();" title="Поворот вправо"/></td>
+            <td rowspan="2"><input type="button" value="Заправить 2л" onclick="boat.refuel(2);" title="Дозаправка"/></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="\/" onclick="boat.changeRPM(-100);" title="Замедление"/></td>
+        </tr>
+        </table>
+    </td>
+    <td style="vertical-align: top;">
+    <div style="height: 500px; overflow-y: scroll;">
+        <h2>Концепция</h2>
+        <p>Реализация разделена на несколько частей. Первая часть - графическая.
+        Её задача - отрисовать объекты управления на экране.</p>
+        <p>Вторая часть - представление судна (физическая модель).
+        В идеале это должна быть максимально правдоподобная физическая модель.
+        Сейчас реализована простейшай линейная модель с минимальными зависимостями.</p>
+        <h2>Иерархия классов</h2>
+        <p>
+            <a href="landEngine.js">Графический движок</a><br/>
+            <a href="landBoat.js">Физическая модель</a>
+        </p>
+        <table>
+        <tr>
+            <td>landEngine</td>
+            <td>Базовый класс графического движка</td>
+        </tr>
+        <tr>
+            <td>landScene</td>
+            <td>Класс сцены. Определяет текущий выводимый экран</td>
+        </tr>
+        <tr>
+            <td>landWorkZones</td>
+            <td>Класс рабочих зон. Определяет отображение рабочих зон на индикаторах.</td>
+        </tr>
+        <tr>
+            <td>landSceneObject</td>
+            <td>Базовый класс объекта сцены</td>
+        </tr>
+        <tr>
+            <td>&nbsp;&nbsp;landQuad</td>
+            <td>Отображение залитого прямоугольника</td>
+        </tr>
+        <tr>
+            <td>&nbsp;&nbsp;landLabel</td>
+            <td>Надпись</td>
+        </tr>
+        <tr>
+            <td>&nbsp;&nbsp;landButton</td>
+            <td>Кнопка</td>
+        </tr>
+        <tr>
+            <td>&nbsp;&nbsp;landBulb</td>
+            <td>Лампочка</td>
+        </tr>
+        <tr>
+            <td>&nbsp;&nbsp;landTumbler</td>
+            <td>Тумблер</td>
+        </tr>
+        <tr>
+            <td>&nbsp;&nbsp;landProgressBar</td>
+            <td>Горизонтальный индикатора заполнения</td>
+        </tr>
+        <tr>
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;landVProgressBar</td>
+            <td>Вертикальный индикатора заполнения</td>
+        </tr>
+        <tr>
+            <td>&nbsp;&nbsp;landGauge</td>
+            <td>Квадратный стрелочный индикатор</td>
+        </tr>
+        <tr>
+            <td>&nbsp;&nbsp;landRoundGauge</td>
+            <td>Круглый стрелочный индикатор</td>
+        </tr>
+        <tr>
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;landCompass</td>
+            <td>Компас</td>
+        </tr>
+        <tr>
+            <td>landBoatEngine</td>
+            <td>Базовый класс двигателя судна</td>
+        </tr>
+        <tr>
+            <td>landBoat</td>
+            <td>Базовый класс судна</td>
+        </tr>
+        </table>  
+    </div>  
+    </td>
+</tr>
+</table>
+<script type="text/javascript">
+var engine = new landEngine('viewport');
+var boat = new landBoat({fuel:1});
+
+/*
+    Формирование приборной панели
+*/
+var dashboard = new landScene();
+dashboard.add(new landQuad({width:800,height:500,color:'silver'}));
+dashboard.add(boat.getRPMGauge()).move(10,10);
+dashboard.add(boat.getFuelGauge()).move(10,160);
+dashboard.add(boat.getSpeedGauge()).move(150,100);
+dashboard.add(boat.getCompass()).move(480,100);
+dashboard.add(new landBulb({id:'engineBulb', x:70, y:350, size: 40, lightColor: 'lime', darkColor: 'green'}));
+dashboard.add(new landTumbler({id:'engineControl'})).move(10, 290);
+dashboard.add(new landLabel({x:10, y:400, text:'ДВИГАТЕЛЬ'}));
+dashboard.add(new landLabel({x:10, y:440, text:'ДВЛ МАСЛА'}));
+dashboard.add(new landBulb({id:'oilBulb', x:120, y:430, size: 30, lightColor: 'red', darkColor: 'maroon'}));
+dashboard.add(new landLabel({x:10, y:475, text:'УР. ТОПЛИВА'}));
+dashboard.add(new landBulb({id:'fuelBulb', x:120, y:465, size: 30, lightColor: 'red', darkColor: 'maroon'}));
+engine.scene = dashboard;
+
+/*
+    Делаем чёрные приборы
+*/
+boat.getRPMGauge().bgColor = 'black';
+boat.getRPMGauge().fgColor = 'white';
+boat.getRPMGauge().arrowColor = 'red';
+boat.getFuelGauge().bgColor = 'black';
+boat.getFuelGauge().fgColor = 'white';
+boat.getFuelGauge().arrowColor = 'red';
+boat.getSpeedGauge().bgColor = 'black';
+boat.getSpeedGauge().fgColor = 'white';
+boat.getSpeedGauge().arrowColor = 'red';
+boat.getCompass().bgColor = 'black';
+boat.getCompass().fgColor = 'white';
+boat.getCompass().arrowColor = 'red';
+
+engine.draw();
+
+/*
+    Обработка нажатия на тумблер включения двигателя
+*/
+dashboard.get('engineControl').click = function()
+{
+    this.state = !this.state;
+    dashboard.get('engineBulb').state = this.state;
+    boat.engine.changeState(this.state);
+    boat.changeRPM(0);
+    engine.draw();
+}
+
+boat.fuelEmpty = function() {
+    dashboard.get('engineBulb').state=false;
+    engine.draw(dashboard.get('engineBulb'));
+}
+
+boat.fuelLevelChange = function() {
+    var bulb = dashboard.get('fuelBulb');
+    var old_state = bulb.state;
+    bulb.state = this.fuel<this.fuelTank*0.1;
+    if(old_state!=bulb.state)
+        engine.draw(bulb);
+}
+</script>
+
+</body>
+</html>
